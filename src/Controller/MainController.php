@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Contact;
 use App\Form\ContactType;
 use App\Mailer\ContactMailer;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,13 +15,15 @@ final class MainController extends AbstractController
 {
 
     /**
-     * @var \App\Mailer\ContactMailer
+     * @var ContactMailer
      */
     private $mailer;
+	private EntityManagerInterface $entityManager;
 
-    public function __construct(ContactMailer $mailer)
+	public function __construct(ContactMailer $mailer, EntityManagerInterface $entityManager)
     {
         $this->mailer = $mailer;
+	    $this->entityManager = $entityManager;
     }
 
 
@@ -55,6 +58,9 @@ final class MainController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+			$this->entityManager->persist($contact);
+			$this->entityManager->flush();
+
             $this->addFlash('success', 'Merci pour votre message');
             $this->mailer->send($contact);
 
